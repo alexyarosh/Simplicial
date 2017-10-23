@@ -45,7 +45,7 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
    previoussequences[i] = [vert[i]];
  end
 ##
- for curdimecounter = 3:maxdim #curdimecounter is dimension+2 or length+1
+ for curdimecounter = 3:maxdim+2 #curdimecounter is dimension+2 or length+1
    currentsequences = Array{Array{Int,1},1}();
    currentlength = curdimecounter-1;
    for m = 1:length(D.facets)
