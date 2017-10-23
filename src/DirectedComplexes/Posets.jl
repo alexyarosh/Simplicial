@@ -1,81 +1,113 @@
-
 type GradedPoset
   dimensions::Array{Int,1} # this is the list of dimensions of the graded poset. This can not be smaller then -1 (corresponding to the empty set)
   dim::Int   # the maximun of dimensions
   Nelements::Array{Int,1}  # total number of facets in teach dimension
   boundaries::Array{Array{Array{Int,1},1},1}   # this is a list of lists each list enumerates the boundary one step down
   negativesigns::Array{Array{BitArray,1},1}
+
 # here boundaries[i][j] is an array of boundaries of the j-th element in i-th dimension
 # here negativesigns[i][j] is an array that indicates if the appropriate boundaary has negative signs
 "This is the constructor for theGradedPoset type from the  DirectedComplex type.
 The way it works, it starts at the top sequences, and iteratively takes the subsequences
 "
-   function GradedPoset(D::DirectedComplex,verbose=false)
-   dimensions=collect(-1:D.dim); Ndimensions=length(dimensions);
-   boundaries=Array{Array{Array{Int,1},1},1}(Ndimensions); #
-   negativesigns=Array{Array{BitArray,1},1}(Ndimensions);
-   for i=1:Ndimensions; boundaries[i]=[]; negativesigns[i]=[] end
-   Nelements=ones(Int,Ndimensions);
-   # set everything for the 0-dimensional things
-   Nelements[2]=length(D.vertices);
-   negativesigns[2]=Array{BitArray,1}(Nelements[2]);
-   boundaries[2]=Array{Array{Int,1},1}(Nelements[2]);
-  for i=1:Nelements[2]; negativesigns[2][i]=falses(1); boundaries[2][i]=ones(Int,1);end
-# For now we assume that the directed complex is pure, i.e. all the maximal sequences have the same length
- dim =D.dimensions[1]; if !all(D.dimensions.==dim); error(" This function currently can only handle pure complexes"); end
- currentsequences=copy(D.facets);
-  for curdimecounter=Ndimensions:-1:3
-    currentlength=curdimecounter-1;
-    Nelements[curdimecounter]=length(currentsequences)
-    boundaries[curdimecounter]=Array{Array{Int,1},1}(Nelements[curdimecounter]);
-    negativesigns[curdimecounter]=Array{BitArray,1}(Nelements[curdimecounter]);
-    boundarysequences=Array{Array{Int,1},1}();
-      for m=1: length(currentsequences)
-        boundaries[curdimecounter][m]=zeros(Int, length(currentsequences[m]));
-        negativesigns[curdimecounter][m]=falses(length(currentsequences[m]));
-        # here we produce the subsequences of currentsequences[m]
-        subsequences=collect(combinations(currentsequences[m],currentlength-1));
-        hasnegativesign=iseven(currentlength);
-            for i=1:currentlength
-                was_encountered_before=false;
-            for s=1:length(boundarysequences)
-               if boundarysequences[s]==subsequences[i];
-                    was_encountered_before=true
-                    ith_place=s
-                    break
-               end # if
-            end   #for s=1:length(boundarysequences)
-              if !was_encountered_before
-                push!(boundarysequences,subsequences[i]); # the actual sequence
-                ith_place=length(boundarysequences);
-              end
-      boundaries[curdimecounter][m][i]=ith_place;
-      negativesigns[curdimecounter][m][i]=hasnegativesign;
-      hasnegativesign=!hasnegativesign;
-    end # for i=1:currentlength
-end #   for m=1: length(currentsequences)
+ 
 
-# this is diagnostic printing:
-if verbose
- print_with_color(:red, "in length $(currentlength)"); println(" there are $(Nelements[curdimecounter]) sequences:")
-  for m=1: length(currentsequences); print("sequence $m : ");println(currentsequences[m]);end
-   println("with the following boundary sequences:")
-for m=1: length(boundarysequences); print_with_color(:blue, "sequence $m : "); println(boundarysequences[m]);end
-end
-
-
-
-
-currentsequences=boundarysequences;
-end   # for currentdimensioncounter=Ndimensions:-1:2
-   new(dimensions,D.dim, Nelements,boundaries,negativesigns)
+function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
+  if maximaldimension == Inf
+     maxdim = D.dim;
+  elseif maximaldimension > D.dim
+        error("maximaldimension exeeds the dimension of the directed complex D ")
+  else
+      maxdim = maximaldimension
   end
+
+  dimensions = collect(-1:D.dim);
+  Ndimensions = length(dimensions);
+  boundaries = Array{Array{Array{Int,1},1},1}(Ndimensions);
+  negativesigns = Array{Array{BitArray,1},1}(Ndimensions);
+  for i = 1:Ndimensions;
+    boundaries[i] = [];
+    negativesigns[i] = []
+  end
+  Nelements = ones(Int,Ndimensions);
+# set everything for the 0-dimensional things
+  Nelements[2] = length(D.vertices);
+  negativesigns[2] = Array{BitArray,1}(Nelements[2]);
+  boundaries[2] = Array{Array{Int,1},1}(Nelements[2]);
+  for i = 1:Nelements[2];
+    negativesigns[2][i] = falses(1);
+    boundaries[2][i] = ones(Int,1);
+  end
+ dim = D.dimensions[end];
+ previoussequences = Array{Array{Int,1},1}(length(D.vertices))
+ vert = collect(D.vertices)
+ for i = 1:length(D.vertices);
+   previoussequences[i] = [vert[i]];
+ end
+##
+ for curdimecounter = 3:maxdim #curdimecounter is dimension+2 or length+1
+   currentsequences = Array{Array{Int,1},1}();
+   currentlength = curdimecounter-1;
+   for m = 1:length(D.facets)
+     if length(D.facets[m]) >= currentlength
+      append!(currentsequences,collect(combinations(D.facets[m],currentlength)))
+    end
+   end
+   currentsequences = unique(currentsequences)
+   Nelements[curdimecounter] = length(currentsequences) #count all sequences of the current dimension
+
+   boundaries[curdimecounter] = Array{Array{Int,1},1}(Nelements[curdimecounter]);
+
+   negativesigns[curdimecounter] = Array{BitArray,1}(Nelements[curdimecounter]);
+
+   # now we have previoussequences -- n-1 chains, and currentsequences -- n chains
+   # it is guaranteed that all the boundaries of currentsequences are already in previoussequences
+   # so we'll go through all the sequences
+   # and in each sequence drop one element at a time and find this sequence in previoussequences
+   for i in 1:length(currentsequences)
+     boundaries[curdimecounter][i] = zeros(Int, length(currentsequences[i]));
+     negativesigns[curdimecounter][i] = falses(length(currentsequences[i]));
+     for j in 1:length(currentsequences[i])
+      # miss the jth elements (Julia automatically handles "j-1 and j+1 out-of-range" issues here)
+      #every sequence in currentsequences has length currentlength
+       boundary = cat(1,currentsequences[i][1:j-1], currentsequences[i][j+1:currentlength])
+       for k in 1:length(previoussequences) #go through previoussequences and find the current boundary
+         if previoussequences[k] == boundary
+           boundaries[curdimecounter][i][j] = k #boundaries[curdimecounter][i] has currentlength elements
+           break
+         end
+       end #for k in 1:length(previoussequences)
+
+       #Since Julia indexes from 1, dropping the first (and third, fifth etc) element should not have the negative sign
+       negativesigns[curdimecounter][i][j] = iseven(j)
+     end # for j in 1:length(currentsequences[i])
+   end # for i in 1:length(currentsequences)
+
+
+   if verbose
+     print_with_color(:red, "in length $(currentlength)"); println(" there are $(Nelements[curdimecounter]) sequences:")
+     for m = 1:length(currentsequences);
+       print("sequence $m : ");
+       println(currentsequences[m]);
+     end
+     println("with the following boundary sequences:")
+
+     for m = 1: length(previoussequences);
+       print_with_color(:blue, "sequence $m : ");
+       println(previoussequences[m]);
+     end
+   end
+   previoussequences = currentsequences
+
+ end # for currentdimensioncounter= 3:Ndimensions
+new(dimensions,D.dim, Nelements,boundaries,negativesigns)
+end
 end
 
 
-
-
-
+  end # GradedPoset
+  
+  
 function BoundaryOperator(P::GradedPoset,k)::SparseMatrixCSC{Int64,Int64}
 assert(issubset([k, k-1],P.dimensions))
 k_ind=findfirst(P.dimensions.==k)
@@ -107,15 +139,15 @@ maximaldimension is an optional parameter to restrict the maximal possible dimen
 
 """
 function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
-         P=GradedPoset(D);
-         if maximaldimension==Inf
-            maxdim=P.dim
-        elseif maximaldimension>P.dim
-               error("maximaldimension exeeds the poset P.dim ")
-        else
-             maxdim=maximaldimension
-        end
 
+         if maximaldimension == Inf
+            maxdim = D.dim;
+        elseif maximaldimension > D.dim
+               error("maximaldimension exeeds the poset D.dim ")
+        else
+             maxdim = maximaldimension
+        end
+        P=GradedPoset(D, maxdim);
          beta=zeros(Int,maxdim+1);
 
          rank_d_n=rank(full(BoundaryOperator(P,0)));
