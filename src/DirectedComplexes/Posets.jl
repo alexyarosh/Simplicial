@@ -102,12 +102,9 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
  end # for currentdimensioncounter= 3:Ndimensions
 new(dimensions,D.dim, Nelements,boundaries,negativesigns)
 end
-end
+end# GradedPoset
 
 
-  end # GradedPoset
-  
-  
 function BoundaryOperator(P::GradedPoset,k)::SparseMatrixCSC{Int64,Int64}
 assert(issubset([k, k-1],P.dimensions))
 k_ind=findfirst(P.dimensions.==k)
