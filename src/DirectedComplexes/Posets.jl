@@ -147,7 +147,7 @@ function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
         else
              maxdim = maximaldimension
         end
-        P=GradedPoset(D, maxdim+1);
+        P=GradedPoset(D, maxdim);
          beta=zeros(Int,maxdim+1);
 
          rank_d_n=rank(full(BoundaryOperator(P,0)));
