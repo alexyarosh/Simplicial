@@ -16,7 +16,7 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
   if maximaldimension == Inf
      maxdim = D.dim;
   elseif maximaldimension > D.dim
-        error("maximaldimension exeeds the dimension of the directed complex D ")
+        error("maximaldimension exceeds the dimension of the directed complex D ")
   else
       maxdim = maximaldimension
   end
@@ -45,7 +45,7 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
    previoussequences[i] = [vert[i]];
  end
 ##
- for curdimecounter = 3:maxdim #curdimecounter is dimension+2 or length+1
+ for curdimecounter = 3:maxdim+2 #curdimecounter is dimension+2 or length+1
    currentsequences = Array{Array{Int,1},1}();
    currentlength = curdimecounter-1;
    for m = 1:length(D.facets)
@@ -100,19 +100,19 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
    previoussequences = currentsequences
 
  end # for currentdimensioncounter= 3:Ndimensions
-new(dimensions,D.dim, Nelements,boundaries,negativesigns)
+new(dimensions, maxdim, Nelements,boundaries,negativesigns)
 end
 end# GradedPoset
 
 
 function BoundaryOperator(P::GradedPoset,k)::SparseMatrixCSC{Int64,Int64}
 assert(issubset([k, k-1],P.dimensions))
-k_ind=findfirst(P.dimensions.==k)
-d=spzeros(Int, P.Nelements[k_ind-1],P.Nelements[k_ind]);
+k_ind = findfirst(P.dimensions.==k)
+d = spzeros(Int, P.Nelements[k_ind-1],P.Nelements[k_ind]);
 
-for m=1:P.Nelements[k_ind];
-    for j=1:length(P.boundaries[k_ind][m])
-      d[P.boundaries[k_ind][m][j],m]=(P.negativesigns[k_ind][m][j])? -1 : 1 ;
+for m = 1:P.Nelements[k_ind];
+    for j = 1:length(P.boundaries[k_ind][m])
+      d[P.boundaries[k_ind][m][j],m] = (P.negativesigns[k_ind][m][j])? -1 : 1 ;
     end
 end
 return d
@@ -137,26 +137,26 @@ maximaldimension is an optional parameter to restrict the maximal possible dimen
 """
 function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
 
-         if maximaldimension == Inf
-            maxdim = D.dim;
-        elseif maximaldimension > D.dim
-               error("maximaldimension exeeds the poset D.dim ")
-        else
-             maxdim = maximaldimension
-        end
-        P=GradedPoset(D, maxdim);
-         beta=zeros(Int,maxdim+1);
+ if maximaldimension == Inf
+    maxdim = D.dim;
+ elseif maximaldimension > D.dim
+    error("maximaldimension exeeds the poset D.dim ")
+ else
+    maxdim = maximaldimension
+ end
+ P=GradedPoset(D, maxdim);
+ beta=zeros(Int,maxdim+1);
 
-         rank_d_n=rank(full(BoundaryOperator(P,0)));
-         for n=0:maxdim;
-             dim_C_n= P.Nelements[n+2];
-             if n<P.dim
-                rank_d_nplus1=rank(full(BoundaryOperator(P,n+1)));
-                beta[n+1]=dim_C_n-rank_d_n - rank_d_nplus1
-                rank_d_n=rank_d_nplus1
-             else
-                  beta[P.dim+1]=dim_C_n-rank_d_n
-             end
-          end
+ rank_d_n=rank(full(BoundaryOperator(P,0)));
+ for n=0:maxdim;
+   dim_C_n= P.Nelements[n+2];
+   if n<P.dim
+     rank_d_nplus1 = rank(full(BoundaryOperator(P,n+1)));
+     beta[n+1] = dim_C_n-rank_d_n - rank_d_nplus1
+     rank_d_n = rank_d_nplus1
+   else
+     beta[P.dim+1] = dim_C_n-rank_d_n
+   end
+ end
 return beta
 end
