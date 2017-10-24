@@ -16,12 +16,12 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
   if maximaldimension == Inf
      maxdim = D.dim;
   elseif maximaldimension > D.dim
-        error("maximaldimension exceeds the dimension of the directed complex D ")
+        error("maximaldimension ($maximaldimension) exceeds the dimension of the directed complex ($D.dim) ")
   else
       maxdim = maximaldimension
   end
 
-  dimensions = collect(-1:D.dim);
+  dimensions = collect(-1:maxdim);
   Ndimensions = length(dimensions);
   boundaries = Array{Array{Array{Int,1},1},1}(Ndimensions);
   negativesigns = Array{Array{BitArray,1},1}(Ndimensions);
@@ -60,10 +60,11 @@ function GradedPoset(D::DirectedComplex, maximaldimension = Inf, verbose=false)
 
    negativesigns[curdimecounter] = Array{BitArray,1}(Nelements[curdimecounter]);
 
-   # now we have previoussequences -- n-1 chains, and currentsequences -- n chains
-   # it is guaranteed that all the boundaries of currentsequences are already in previoussequences
-   # so we'll go through all the sequences
-   # and in each sequence drop one element at a time and find this sequence in previoussequences
+   " now we have previoussequences -- n-1 chains, and currentsequences -- n chains
+    it is guaranteed that all the boundaries of currentsequences are already in previoussequences
+    so we'll go through all the sequences
+    and in each sequence drop one element at a time and find this sequence in previoussequences
+   "   
    for i in 1:length(currentsequences)
      boundaries[curdimecounter][i] = zeros(Int, length(currentsequences[i]));
      negativesigns[curdimecounter][i] = falses(length(currentsequences[i]));
@@ -140,7 +141,7 @@ function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
  if maximaldimension == Inf
     maxdim = D.dim;
  elseif maximaldimension > D.dim
-    error("maximaldimension exeeds the poset D.dim ")
+    error("maximaldimension ($maximaldimension) exceeds the dimension of the directed complex ($D.dim) ")
  else
     maxdim = maximaldimension
  end
