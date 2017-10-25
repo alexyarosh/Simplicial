@@ -138,20 +138,20 @@ maximaldimension is an optional parameter to restrict the maximal possible dimen
 """
 function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
 
- if maximaldimension == Inf
+ if maximaldimension == Inf or maximaldimension == D.dim
     maxdim = D.dim;
  elseif maximaldimension > D.dim
     error("maximaldimension ($maximaldimension) exceeds the dimension of the directed complex ($D.dim) ")
  else
-    maxdim = maximaldimension
+    maxdim = maximaldimension + 1 # if we want first k BettiNumbers of D, we need k+1-skeleton of D
  end
- P=GradedPoset(D, maxdim);
- beta=zeros(Int,maxdim+1);
+ P =G radedPoset(D, maxdim);
+ beta = zeros(Int,maxdim+1);
 
- rank_d_n=rank(full(BoundaryOperator(P,0)));
- for n=0:maxdim;
-   dim_C_n= P.Nelements[n+2];
-   if n<P.dim
+ rank_d_n = rank(full(BoundaryOperator(P,0)));
+ for n = 0:maxdim;
+   dim_C_n = P.Nelements[n+2];
+   if n < P.dim
      rank_d_nplus1 = rank(full(BoundaryOperator(P,n+1)));
      beta[n+1] = dim_C_n-rank_d_n - rank_d_nplus1
      rank_d_n = rank_d_nplus1
@@ -159,5 +159,8 @@ function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
      beta[P.dim+1] = dim_C_n-rank_d_n
    end
  end
-return beta
+ if maximaldimension == Inf or maximaldimension == D.dim 
+    return beta
+ else
+    return beta[1:maximaldimension]    
 end
