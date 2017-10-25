@@ -138,7 +138,7 @@ maximaldimension is an optional parameter to restrict the maximal possible dimen
 """
 function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
 
- if maximaldimension == Inf or maximaldimension == D.dim
+ if (maximaldimension == Inf) || (maximaldimension == D.dim)
     maxdim = D.dim;
  elseif maximaldimension > D.dim
     error("maximaldimension ($maximaldimension) exceeds the dimension of the directed complex ($D.dim) ")
