@@ -145,7 +145,7 @@ function BettiNumbers(D::DirectedComplex, maximaldimension=Inf)::Vector{Int}
  else
     maxdim = maximaldimension + 1 # if we want first k BettiNumbers of D, we need k+1-skeleton of D
  end
- P =G radedPoset(D, maxdim);
+ P =GradedPoset(D, maxdim);
  beta = zeros(Int,maxdim+1);
 
  rank_d_n = rank(full(BoundaryOperator(P,0)));
